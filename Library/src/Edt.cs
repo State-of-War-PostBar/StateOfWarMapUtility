@@ -87,8 +87,6 @@ namespace StateOfWarUtility
         Reinforcement = 2,
     }
     
-    
-    
     // ================================================================================================================
     // Unit section.
     // ================================================================================================================
@@ -294,17 +292,17 @@ namespace StateOfWarUtility
         [FieldOffset(0x44)] public uint pFighter;
         [FieldOffset(0x48)] public uint nFighter;
         
-        [FieldOffset(0x5C)] public byte pTurretDefence;
-        [FieldOffset(0x5D)] public byte pTurretAntiair;
-        [FieldOffset(0x5E)] public byte pTurretIon;
-        [FieldOffset(0x5F)] public byte pTurretLed;
-        [FieldOffset(0x60)] public byte pTurretCluster;
+        [FieldOffset(0x5C)] public bool pTurretDefence;
+        [FieldOffset(0x5D)] public bool pTurretAntiair;
+        [FieldOffset(0x5E)] public bool pTurretIon;
+        [FieldOffset(0x5F)] public bool pTurretLed;
+        [FieldOffset(0x60)] public bool pTurretCluster;
         
-        [FieldOffset(0x66)] public byte nTurretDefence;
-        [FieldOffset(0x67)] public byte nTurretAntiair;
-        [FieldOffset(0x68)] public byte nTurretIon;
-        [FieldOffset(0x69)] public byte nTurretLed;
-        [FieldOffset(0x6A)] public byte nTurretCluster;
+        [FieldOffset(0x66)] public bool nTurretDefence;
+        [FieldOffset(0x67)] public bool nTurretAntiair;
+        [FieldOffset(0x68)] public bool nTurretIon;
+        [FieldOffset(0x69)] public bool nTurretLed;
+        [FieldOffset(0x6A)] public bool nTurretCluster;
         
         [FieldOffset(0x7C)] public uint pDiskAttack;
         [FieldOffset(0x80)] public uint nDiskAttack;

@@ -17,7 +17,7 @@ public static class __Main__
         File.WriteAllBytes("./Test/res/M00.srf", Srf.ToSrf(xjpg));
         File.WriteAllBytes("./Test/res/M00.jpg", Srf.ToJpg(xsrf));
         
-        Bitmap bitmap = (Bitmap)Bitmap.FromFile("./Test/res/output.jpg");
+        Bitmap bitmap = (Bitmap)Bitmap.FromFile("./Test/res/M00.jpg");
         bitmap.Save("./Test/res/jpgCompatiabiliyTest.jpg");
     }
     

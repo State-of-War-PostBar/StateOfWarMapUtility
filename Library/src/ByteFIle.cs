@@ -13,6 +13,4 @@ namespace StateOfWarUtility
         public ByteFile(byte[] raw) { data = new List<byte>(raw); }
         public void Save(string path) => File.WriteAllBytes(path, data.ToArray());
     }
-    
-    
 }
