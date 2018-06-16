@@ -91,7 +91,7 @@ namespace StateOfWarUtility
     // Unit section.
     // ================================================================================================================
     
-    [StructLayout(LayoutKind.Explicit)]
+    
     public struct Unit
     {
         internal static readonly List<byte> template = new List<byte> {
@@ -101,10 +101,10 @@ namespace StateOfWarUtility
             0x50,0x02,0x00,0x00,
             0xF0,0x01,0x00,0x00 };
         internal const int length = 0x14;
-        [FieldOffset(0x4)] public UnitType type;
-        [FieldOffset(0x8)] public Owner owner;
-        [FieldOffset(0xC)] public uint x;
-        [FieldOffset(0x10)] public uint y;
+        [Location(0x4)] public UnitType type;
+        [Location(0x8)] public Owner owner;
+        [Location(0xC)] public uint x;
+        [Location(0x10)] public uint y;
     }
     
     public class UnitManager
@@ -130,23 +130,16 @@ namespace StateOfWarUtility
         
         public Unit this[int index]
         {
-            get
-            {
-                Unit v;
-                unsafe { data.GrabData(unitsBegin + index * Unit.length, &v, typeof(Unit)); }
-                return v;
-            }
-            
-            set { unsafe { data.Set(unitsBegin + index * Unit.length, &value, typeof(Unit)); } }
+            get => (Unit)data.GrabData(unitsBegin + index * Unit.length, typeof(Unit));
+            set => data.Set(unitsBegin + index * Unit.length, value, typeof(Unit));
         }
         
         public void Add(int before, Unit val)
         {
             if(before < 0 || before >= count)
                 throw new InvalidOperationException("cannot insert the element before the specific position.");
-            
             data.InsertRange(unitsBegin + before * Unit.length, Unit.template);
-            unsafe { data.Set(unitsBegin + before * Unit.length, &val, typeof(Unit)); }
+            data.Set(unitsBegin + before * Unit.length, val, typeof(Unit));
             count++;
         }
         
@@ -154,11 +147,8 @@ namespace StateOfWarUtility
         {
             if(index < 0 || index >= count)
                 throw new InvalidOperationException("cannot remove the element that does not exist.");
-            
-            Unit v;
-            unsafe { data.GrabData(unitsBegin + index * Unit.length, &v, typeof(Unit)); }
+            var v = (Unit)data.GrabData(unitsBegin + index * Unit.length, typeof(Unit));
             data.RemoveRange(unitsBegin + index * Unit.length, Unit.length);
-            
             count--;
             return v;
         }
@@ -168,7 +158,7 @@ namespace StateOfWarUtility
     // Building section.
     // ================================================================================================================
     
-    [StructLayout(LayoutKind.Explicit)]
+    
     public struct Building
     {
         internal static readonly List<byte> template = new List<byte> {
@@ -184,23 +174,23 @@ namespace StateOfWarUtility
             0x63,0x00,0x00,0x00 };
         
         internal const int length = 0x4C;
-        [FieldOffset(0x04)] public BuildingType type;
-        [FieldOffset(0x08)] public uint level;
-        [FieldOffset(0x0C)] public UnitType production0;
-        [FieldOffset(0x10)] public UnitType production1;
-        [FieldOffset(0x14)] public UnitType production2;
-        [FieldOffset(0x18)] public UnitType production3;
-        [FieldOffset(0x1C)] public UnitType production4;
-        [FieldOffset(0x20)] public uint upgrade0;
-        [FieldOffset(0x24)] public uint upgrade1;
-        [FieldOffset(0x28)] public uint upgrade2;
-        [FieldOffset(0x2C)] public uint upgrade3;
-        [FieldOffset(0x30)] public uint upgrade4;
-        [FieldOffset(0x38)] public Owner owner;
-        [FieldOffset(0x3C)] public bool satellite;
-        [FieldOffset(0x40)] public uint x;
-        [FieldOffset(0x44)] public uint y;
-        [FieldOffset(0x48)] public uint health;        
+        [Location(0x04)] public BuildingType type;
+        [Location(0x08)] public uint level;
+        [Location(0x0C)] public UnitType production0;
+        [Location(0x10)] public UnitType production1;
+        [Location(0x14)] public UnitType production2;
+        [Location(0x18)] public UnitType production3;
+        [Location(0x1C)] public UnitType production4;
+        [Location(0x20)] public uint upgrade0;
+        [Location(0x24)] public uint upgrade1;
+        [Location(0x28)] public uint upgrade2;
+        [Location(0x2C)] public uint upgrade3;
+        [Location(0x30)] public uint upgrade4;
+        [Location(0x38)] public Owner owner;
+        [Location(0x3C)] public bool satellite;
+        [Location(0x40)] public uint x;
+        [Location(0x44)] public uint y;
+        [Location(0x48)] public uint health;        
     }
     
     
@@ -227,14 +217,8 @@ namespace StateOfWarUtility
         
         public Building this[int index]
         {
-            get
-            {
-                Building v;
-                unsafe { data.GrabData(buildingsBegin + index * Building.length, &v, typeof(Building)); }
-                return v;
-            }
-            
-            set { unsafe { data.Set(buildingsBegin + index * Building.length, &value, typeof(Building)); } }
+            get => (Building)data.GrabData(buildingsBegin + index * Building.length, typeof(Building));
+            set => data.Set(buildingsBegin + index * Building.length, value, typeof(Building));
         }
         
         public void Add(int before, Building val)
@@ -243,7 +227,7 @@ namespace StateOfWarUtility
                 throw new InvalidOperationException("cannot insert the element before the specific position.");
             
             data.InsertRange(buildingsBegin + before * Building.length, Building.template);
-            unsafe { data.Set(buildingsBegin + before * Building.length, &val, typeof(Building)); }
+            data.Set(buildingsBegin + before * Building.length, val, typeof(Building));
             count++;
         }
         
@@ -252,10 +236,8 @@ namespace StateOfWarUtility
             if(index < 0 || index >= count)
                 throw new InvalidOperationException("cannot remove the element that does not exist.");
             
-            Building v;
-            unsafe { data.GrabData(buildingsBegin + index * Building.length, &v, typeof(Building)); }
+            var v = (Building)data.GrabData(buildingsBegin + index * Building.length, typeof(Building));
             data.RemoveRange(buildingsBegin + index * Building.length, Building.length);
-            
             count--;
             return v;
         }
@@ -265,7 +247,7 @@ namespace StateOfWarUtility
     // Edt control and global settings section.
     // ================================================================================================================
     
-    [StructLayout(LayoutKind.Explicit)]
+    
     public struct EdtInfo
     {
         public static readonly byte[] edtHeader = new byte[]{0x04, 0x00, 0x8E, 0x26, 0x06, 0x00, 0x00, 0x00};
@@ -275,58 +257,52 @@ namespace StateOfWarUtility
         // p is player.
         // n is enemy.
         
-        [FieldOffset(0x08)] public uint pMoney;
-        [FieldOffset(0x0C)] public uint nMoney;
+        [Location(0x08)] public uint pMoney;
+        [Location(0x0C)] public uint nMoney;
         
-        [FieldOffset(0x94)] public uint pResearch;
-        [FieldOffset(0x98)] public uint nResearch;
+        [Location(0x94)] public uint pResearch;
+        [Location(0x98)] public uint nResearch;
         
-        [FieldOffset(0x14)] public uint pBomber;
-        [FieldOffset(0x18)] public uint nBomber;
-        [FieldOffset(0x20)] public uint pMeteor;
-        [FieldOffset(0x24)] public uint nMeteor;
-        [FieldOffset(0x2C)] public uint pCarrier;
-        [FieldOffset(0x30)] public uint nCarrier;
-        [FieldOffset(0x38)] public uint pTripler;
-        [FieldOffset(0x3C)] public uint nTripler;
-        [FieldOffset(0x44)] public uint pFighter;
-        [FieldOffset(0x48)] public uint nFighter;
+        [Location(0x14)] public uint pBomber;
+        [Location(0x18)] public uint nBomber;
+        [Location(0x20)] public uint pMeteor;
+        [Location(0x24)] public uint nMeteor;
+        [Location(0x2C)] public uint pCarrier;
+        [Location(0x30)] public uint nCarrier;
+        [Location(0x38)] public uint pTripler;
+        [Location(0x3C)] public uint nTripler;
+        [Location(0x44)] public uint pFighter;
+        [Location(0x48)] public uint nFighter;
         
-        [FieldOffset(0x5C)] public bool pTurretDefence;
-        [FieldOffset(0x5D)] public bool pTurretAntiair;
-        [FieldOffset(0x5E)] public bool pTurretIon;
-        [FieldOffset(0x5F)] public bool pTurretLed;
-        [FieldOffset(0x60)] public bool pTurretCluster;
+        [Location(0x5C)] public bool pTurretDefence;
+        [Location(0x5D)] public bool pTurretAntiair;
+        [Location(0x5E)] public bool pTurretIon;
+        [Location(0x5F)] public bool pTurretLed;
+        [Location(0x60)] public bool pTurretCluster;
         
-        [FieldOffset(0x66)] public bool nTurretDefence;
-        [FieldOffset(0x67)] public bool nTurretAntiair;
-        [FieldOffset(0x68)] public bool nTurretIon;
-        [FieldOffset(0x69)] public bool nTurretLed;
-        [FieldOffset(0x6A)] public bool nTurretCluster;
+        [Location(0x66)] public bool nTurretDefence;
+        [Location(0x67)] public bool nTurretAntiair;
+        [Location(0x68)] public bool nTurretIon;
+        [Location(0x69)] public bool nTurretLed;
+        [Location(0x6A)] public bool nTurretCluster;
         
-        [FieldOffset(0x7C)] public uint pDiskAttack;
-        [FieldOffset(0x80)] public uint nDiskAttack;
+        [Location(0x7C)] public uint pDiskAttack;
+        [Location(0x80)] public uint nDiskAttack;
         
-        [FieldOffset(0x88)] public uint pDisk;
-        [FieldOffset(0x8C)] public uint nDisk;
+        [Location(0x88)] public uint pDisk;
+        [Location(0x8C)] public uint nDisk;
         
-        [FieldOffset(0x104)] public bool hasTimeLimit;
-        [FieldOffset(0x108)] public uint timeLimit;
-        [FieldOffset(0x10C)] public TimeLimitType timeLimitType;
+        [Location(0x104)] public bool hasTimeLimit;
+        [Location(0x108)] public uint timeLimit;
+        [Location(0x10C)] public TimeLimitType timeLimitType;
     }
     
     public sealed class Edt : ByteFile
     {
         public EdtInfo headerInfo
         {
-            get
-            {
-                EdtInfo v;
-                unsafe { data.GrabData(0, &v, typeof(EdtInfo)); }
-                return v;
-            }
-            
-            set { unsafe { data.Set(0, &value, typeof(EdtInfo)); } }
+            get => (EdtInfo)data.GrabData(0, typeof(EdtInfo));
+            set => data.Set(0, value, typeof(EdtInfo));
         }
         
         public readonly UnitManager units;

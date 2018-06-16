@@ -4,63 +4,78 @@ using System.Runtime.InteropServices;
 
 namespace StateOfWarUtility
 {
+    public class Location : Attribute
+    {
+        public int offset;
+        public Location(int offset) => this.offset = offset;
+    }
+    
     public static class ListExt
     {
-        public static byte[] Slice(this List<byte> lst, int begin, int len)
+        public static byte[] Slice(this IList<byte> lst, int begin, int len)
         {
             byte[] res = new byte[len];
             for(int i=0; i<len; i++) res[i] = lst[begin + i];
             return res;
         }
         
-        public static unsafe List<byte> Set(this List<byte> lst, int begin, void* data, Type type)
+        public static unsafe IList<byte> Set(this IList<byte> lst, int begin, ValueType data, Type type)
         {
             // Only assign the specified offsets.
             foreach(var i in type.GetFields())
             {
-                byte* d = (byte*)data;
-                var attrs = i.GetCustomAttributes(typeof(FieldOffsetAttribute), false);
+                var attrs = i.GetCustomAttributes(typeof(Location), false);
                 if(attrs == null || attrs.Length != 1) continue;
-                var attr = attrs[0] as FieldOffsetAttribute;
+                var attr = attrs[0] as Location;
+                byte[] sec = null;
                 if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
                 {
-                    
-                    lst[begin + attr.Value + 0] = d[attr.Value + 0];
-                    lst[begin + attr.Value + 1] = d[attr.Value + 1];
-                    lst[begin + attr.Value + 2] = d[attr.Value + 2];
-                    lst[begin + attr.Value + 3] = d[attr.Value + 3];
+                    sec = BitConverter.GetBytes((uint)i.GetValue(data));
                 }
                 else if(i.FieldType == typeof(ushort))
                 {
-                    lst[begin + attr.Value + 0] = d[attr.Value + 0];
-                    lst[begin + attr.Value + 1] = d[attr.Value + 1];
+                    sec = BitConverter.GetBytes((ushort)i.GetValue(data));
                 }
-                else if(i.FieldType == typeof(byte) || i.FieldType == typeof(bool))
+                else if(i.FieldType == typeof(byte))
                 {
-                    lst[begin + attr.Value + 0] = d[attr.Value + 0];
+                    sec = BitConverter.GetBytes((byte)i.GetValue(data));
+                }
+                else if(i.FieldType == typeof(bool))
+                {
+                    sec = BitConverter.GetBytes((bool)i.GetValue(data));
                 }
                 else
                     throw new InvalidOperationException(i.FieldType + " not supported");
+                
+                // Assert sec != null.
+                for(int x = 0; x < sec.Length; x++)
+                {
+                    lst[begin + x] = sec[x];
+                }
             }
             return lst;
         }
         
-        public static unsafe void GrabData(this List<byte> lst, int begin, void* data, Type type)
+        public static unsafe ValueType GrabData(this IList<byte> lst, int begin, Type type)
         {
+            ValueType data = (ValueType)Activator.CreateInstance(type);
             foreach(var i in type.GetFields())
             {
-                var attrs = i.GetCustomAttributes(typeof(FieldOffsetAttribute), false);
+                var attrs = i.GetCustomAttributes(typeof(Location), false);
                 if(attrs == null || attrs.Length != 1) continue;
-                var attr = attrs[0] as FieldOffsetAttribute;
+                var attr = attrs[0] as Location;
                 if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
-                    *((uint*)((byte*)data + attr.Value)) = BitConverter.ToUInt32(lst.Slice(begin + attr.Value, 4), 0);
+                    i.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + attr.offset, 4), 0));
                 else if(i.FieldType == typeof(ushort))
-                    *((ushort*)((byte*)data + attr.Value)) = BitConverter.ToUInt16(lst.Slice(begin + attr.Value, 2), 0);
-                else if(i.FieldType == typeof(byte) || i.FieldType == typeof(bool))
-                    ((byte*)data)[attr.Value] = lst[begin + attr.Value];
+                    i.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + attr.offset, 2), 0));
+                else if(i.FieldType == typeof(byte))
+                    i.SetValue(data, lst[begin + attr.offset]);
+                else if(i.FieldType == typeof(bool))
+                    i.SetValue(data, lst[begin + attr.offset] == 0 ? false : true);
                 else
                     throw new InvalidOperationException(i.FieldType + " not supported");
             }
+            return data;
         }
     }
     

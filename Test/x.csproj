@@ -4,7 +4,7 @@
     <AssemblyName>StateOfWarUtility.Test</AssemblyName>
     <OutputType>exe</OutputType>
     <OutputPath>./bin</OutputPath>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StartWorkingDirectory>./</StartWorkingDirectory>
     <DebugSymbols>false</DebugSymbols>

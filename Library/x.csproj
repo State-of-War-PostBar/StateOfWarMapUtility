@@ -4,7 +4,7 @@
     <AssemblyName>StateOfWarUtility</AssemblyName>
     <OutputType>library</OutputType>
     <OutputPath>./bin</OutputPath>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StartWorkingDirectory>./</StartWorkingDirectory>
