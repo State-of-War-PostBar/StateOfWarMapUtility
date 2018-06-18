@@ -39,7 +39,7 @@ namespace StateOfWarUtility
     
     public struct MapInfo
     {
-        internal static readonly IReadOnlyList<byte> mapHeader = new byte[]{0x04,0x56,0x45,0x52,0x37,0x00,0x03,0x00,0x00,0xC0,0x04,0x00,0x00,0x40,0x00,0x00,0x00,0x40,0x00,0x00,0x00};
+        internal static readonly IReadOnlyList<byte> mapHeader = new byte[]{0x04,0x56,0x45,0x52,0x37};
         public const int length = 0x15;
         [Location(0x05)] public uint initViewX;
         [Location(0x09)] public uint initViewY;
@@ -75,6 +75,19 @@ namespace StateOfWarUtility
         
         public Map(string filePath) : this(File.ReadAllBytes(filePath)) { }
         public Map(byte[] raw) : base(raw) { }
+        
+        public static bool Validate(string path)
+        {
+            try
+            {
+                var data = File.ReadAllBytes(path);
+                var head = data.Slice(0, MapInfo.mapHeader.Count);
+                return MapInfo.mapHeader.SameAs(head);
+            }
+            catch(FileNotFoundException) { return false; }
+            catch(FieldAccessException) { return false; }
+            catch(AccessViolationException) { return false; }
+        }
     }
     
 }

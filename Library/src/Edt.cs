@@ -94,7 +94,7 @@ namespace StateOfWarUtility
     
     public struct Unit
     {
-        internal static readonly List<byte> template = new List<byte> {
+        internal static readonly IReadOnlyList<byte> template = new byte[] {
             0xE0,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,
@@ -161,7 +161,7 @@ namespace StateOfWarUtility
     
     public struct Building
     {
-        internal static readonly List<byte> template = new List<byte> {
+        internal static readonly IReadOnlyList<byte> template = new byte[] {
             0x7B,0x00,0x00,0x00,0x64,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -250,7 +250,8 @@ namespace StateOfWarUtility
     
     public struct EdtInfo
     {
-        public static readonly byte[] edtHeader = new byte[]{0x04, 0x00, 0x8E, 0x26, 0x06, 0x00, 0x00, 0x00};
+        public static readonly IReadOnlyList<byte> edtHeader = new byte[]{0x04, 0x00, 0x8E, 0x26, 0x06, 0x00, 0x00, 0x00};
+        public static readonly IReadOnlyList<byte> edtTail = new byte[]{0xE8, 0x1D, 0x00, 0x00};
         internal const int length = 0x178;
         
         // The p prefix and the n prefix:
@@ -313,6 +314,20 @@ namespace StateOfWarUtility
         {
             buildings = new BuildingManager(data);
             units = new UnitManager(data, buildings);
+        }
+        
+        public static bool Validate(string path)
+        {
+            try
+            {
+                var data = File.ReadAllBytes(path);
+                var head = data.Slice(0, EdtInfo.edtHeader.Count);
+                var tail = data.Slice(data.Length - EdtInfo.edtTail.Count, EdtInfo.edtTail.Count);
+                return EdtInfo.edtHeader.SameAs(head) || EdtInfo.edtTail.SameAs(tail);
+            }
+            catch(FileNotFoundException) { return false; }
+            catch(FieldAccessException) { return false; }
+            catch(AccessViolationException) { return false; }
         }
     }
     

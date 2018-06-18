@@ -12,7 +12,17 @@ namespace StateOfWarUtility
     
     public static class ListExt
     {
-        public static byte[] Slice(this IList<byte> lst, int begin, int len)
+        public static bool SameAs(this IReadOnlyList<byte> lst, IReadOnlyList<byte> other)
+        {
+            if(lst.Count != other.Count) return false;
+            for(int i=0; i<lst.Count; i++)
+            {
+                if(lst[i] != other[i]) return false;
+            }
+            return true;
+        }
+        
+        public static byte[] Slice(this IReadOnlyList<byte> lst, int begin, int len)
         {
             byte[] res = new byte[len];
             for(int i=0; i<len; i++) res[i] = lst[begin + i];
@@ -56,7 +66,7 @@ namespace StateOfWarUtility
             return lst;
         }
         
-        public static unsafe ValueType GrabData(this IList<byte> lst, int begin, Type type)
+        public static unsafe ValueType GrabData(this IReadOnlyList<byte> lst, int begin, Type type)
         {
             ValueType data = (ValueType)Activator.CreateInstance(type);
             foreach(var i in type.GetFields())

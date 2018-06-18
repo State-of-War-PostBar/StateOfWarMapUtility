@@ -21,9 +21,11 @@ public static class __Main__
         bitmap.Save("./Test/res/jpgCompatiabiliyTest.jpg");
     }
     
-    static void MapTest()
+    static void MapTest(string path)
     {
-        Map map = new Map("./Test/res/x.map");
+        if(!Map.Validate(path))
+            throw new FileLoadException(path + " is not a map file.");
+        Map map = new Map(path);
         
         WriteLine(string.Format("size ({0}, {1}) init ({0}, {1})",
             map.headerInfo.width, map.headerInfo.height, map.headerInfo.initViewX, map.headerInfo.initViewY));
@@ -56,9 +58,12 @@ public static class __Main__
         map.Save("./Test/res/M00.map");
     }
     
-    static void EdtTest()
+    static void EdtTest(string path)
     {
-        Edt edt = new Edt("./Test/res/x.edt");
+        if(!Edt.Validate(path))
+            throw new FileLoadException(path + " is not a edt file.");
+        
+        Edt edt = new Edt(path);
         
         var header = edt.headerInfo;
         WriteLine("Time limit : " + header.hasTimeLimit);
@@ -133,8 +138,8 @@ public static class __Main__
     public static void Main()
     {
         SrfTest();
-        MapTest();
-        EdtTest();
+        MapTest("./Test/res/x.map");
+        EdtTest("./Test/res/x.edt");
         
     }
     
