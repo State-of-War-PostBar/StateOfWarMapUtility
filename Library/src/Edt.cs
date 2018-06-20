@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
@@ -92,66 +93,64 @@ namespace StateOfWarUtility
     // ================================================================================================================
     
     
-    public struct Unit
+    public class Unit
     {
-        internal static readonly IReadOnlyList<byte> template = new byte[] {
+        internal static readonly List<byte> template = new List<byte>() {
             0xE0,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,
             0x50,0x02,0x00,0x00,
             0xF0,0x01,0x00,0x00 };
-        internal const int length = 0x14;
+        internal static int length { get => template.Count; }
         [Location(0x4)] public UnitType type;
         [Location(0x8)] public Owner owner;
         [Location(0xC)] public uint x;
         [Location(0x10)] public uint y;
+        
+        internal Unit() => Access(0, template);
+        internal Unit(int begin, List<byte> arr) => Access(begin, arr);        
+        internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
+        internal void AppendTo(List<byte> arr)
+        {
+            arr.AddRange(template);
+            arr.Set(arr.Count - length, this);
+        }
+        
+        internal static bool CheckHeader(int begin, List<byte> arr) => template.Slice(0, 4).SameAs(arr.Slice(begin, 4));
     }
     
-    public class UnitManager
+    public class UnitManager : IEnumerable<Unit>
     {
-        readonly BuildingManager mgr;
-        readonly List<byte> data;
-        internal UnitManager(List<byte> data, BuildingManager mgr)
+        readonly List<Unit> data = new List<Unit>();
+        
+        internal UnitManager() { }
+        
+        public int count { get => data.Count;}
+        
+        public Unit this[int index] { get => data[index]; }
+        
+        public Unit Add() => Add(count);
+        public Unit Add(int before)
         {
-            this.data = data;
-            this.mgr = mgr;
-            
-            int cur = unitsBegin;
-            while(cur < data.Count && data[cur] == Unit.template[0])
-            {
-                cur += Unit.length;
-                count++;
-            }
-        }
-        
-        public int count { get; internal set; }
-        
-        internal int unitsBegin { get => mgr.buildingsBegin + mgr.count * Building.length; }
-        
-        public Unit this[int index]
-        {
-            get => (Unit)data.GrabData(unitsBegin + index * Unit.length, typeof(Unit));
-            set => data.Set(unitsBegin + index * Unit.length, value, typeof(Unit));
-        }
-        
-        public void Add(int before, Unit val)
-        {
-            if(before < 0 || before >= count)
-                throw new InvalidOperationException("cannot insert the element before the specific position.");
-            data.InsertRange(unitsBegin + before * Unit.length, Unit.template);
-            data.Set(unitsBegin + before * Unit.length, val, typeof(Unit));
-            count++;
+            if(before < 0 || before > count)
+                throw new InvalidOperationException(
+                    string.Format("cannot insert the element before {0}, array length is {1}.", before, count));
+            Unit unit = new Unit();
+            data.Insert(before, unit);
+            return unit;
         }
         
         public Unit Remove(int index)
         {
             if(index < 0 || index >= count)
                 throw new InvalidOperationException("cannot remove the element that does not exist.");
-            var v = (Unit)data.GrabData(unitsBegin + index * Unit.length, typeof(Unit));
-            data.RemoveRange(unitsBegin + index * Unit.length, Unit.length);
-            count--;
-            return v;
+            Unit rm = data[index];
+            data.RemoveAt(index);
+            return rm;
         }
+        
+        public IEnumerator<Unit> GetEnumerator() => data.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
     }
     
     // ================================================================================================================
@@ -159,9 +158,9 @@ namespace StateOfWarUtility
     // ================================================================================================================
     
     
-    public struct Building
+    public class Building
     {
-        internal static readonly IReadOnlyList<byte> template = new byte[] {
+        internal static readonly List<byte> template = new List<byte>() {
             0x7B,0x00,0x00,0x00,0x64,0x00,0x00,0x00,
             0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -172,8 +171,7 @@ namespace StateOfWarUtility
             0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
             0x3A,0x00,0x00,0x00,0x35,0x00,0x00,0x00,
             0x63,0x00,0x00,0x00 };
-        
-        internal const int length = 0x4C;
+        internal static int length { get => template.Count; }
         [Location(0x04)] public BuildingType type;
         [Location(0x08)] public uint level;
         [Location(0x0C)] public UnitType production0;
@@ -190,57 +188,53 @@ namespace StateOfWarUtility
         [Location(0x3C)] public bool satellite;
         [Location(0x40)] public uint x;
         [Location(0x44)] public uint y;
-        [Location(0x48)] public uint health;        
+        [Location(0x48)] public uint health;
+        
+        internal Building() => Access(0, template);
+        internal Building(int begin, List<byte> arr) => Access(begin, arr);        
+        internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
+        internal void AppendTo(List<byte> arr)
+        {
+            arr.AddRange(template);
+            arr.Set(arr.Count - length, this);
+        }
+        
+        internal static bool CheckHeader(int begin, List<byte> arr) => template.Slice(0, 4).SameAs(arr.Slice(begin, 4));
     }
     
     
-    public class BuildingManager
+    public class BuildingManager : IEnumerable<Building>
     {
-        readonly List<byte> data;
+        readonly List<Building> data = new List<Building>();
         
-        internal BuildingManager(List<byte> data)
+        internal BuildingManager() { }
+        
+        public int count { get => data.Count; }
+        
+        public Building this[int index] { get => data[index]; }
+        
+        public Building Add() => Add(count);
+        public Building Add(int before)
         {
-            this.data = data;
-            
-            int cur = EdtInfo.length;
-            while(cur < data.Count && data[cur] == Building.template[0])
-            {
-                cur += Building.length;
-                count++;
-            }
-        }
-        
-        
-        public int count { get; internal set; }
-        
-        internal int buildingsBegin { get => EdtInfo.length; }
-        
-        public Building this[int index]
-        {
-            get => (Building)data.GrabData(buildingsBegin + index * Building.length, typeof(Building));
-            set => data.Set(buildingsBegin + index * Building.length, value, typeof(Building));
-        }
-        
-        public void Add(int before, Building val)
-        {
-            if(before < 0 || before >= count)
-                throw new InvalidOperationException("cannot insert the element before the specific position.");
-            
-            data.InsertRange(buildingsBegin + before * Building.length, Building.template);
-            data.Set(buildingsBegin + before * Building.length, val, typeof(Building));
-            count++;
+            if(before < 0 || before > count)
+                throw new InvalidOperationException(
+                    string.Format("cannot insert the element before {0}, array length is {1}.", before, count));
+            Building building = new Building();
+            data.Insert(before, building);
+            return building;
         }
         
         public Building Remove(int index)
         {
             if(index < 0 || index >= count)
                 throw new InvalidOperationException("cannot remove the element that does not exist.");
-            
-            var v = (Building)data.GrabData(buildingsBegin + index * Building.length, typeof(Building));
-            data.RemoveRange(buildingsBegin + index * Building.length, Building.length);
-            count--;
-            return v;
+            Building rm = data[index];
+            data.RemoveAt(index);
+            return rm;
         }
+        
+        public IEnumerator<Building> GetEnumerator() => data.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
     }
     
     // ================================================================================================================
@@ -248,15 +242,39 @@ namespace StateOfWarUtility
     // ================================================================================================================
     
     
-    public struct EdtInfo
+    public class EdtInfo
     {
-        public static readonly IReadOnlyList<byte> edtHeader = new byte[]{0x04, 0x00, 0x8E, 0x26, 0x06, 0x00, 0x00, 0x00};
-        public static readonly IReadOnlyList<byte> edtTail = new byte[]{0xE8, 0x1D, 0x00, 0x00};
-        internal const int length = 0x178;
+        public static readonly List<byte> edtHeader = new List<byte> {
+            0x04,0x00,0x8E,0x26,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x03,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x02,0x00,0x00,0x00,0x0E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00
+            ,0x0D,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x0C,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x0B,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0C,0x00,0x00,0x00
+            ,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x90,0x01,0x00,0x00,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x21,0x00,0x00,0x00,0x01,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+            ,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
         
-        // The p prefix and the n prefix:
-        // p is player.
-        // n is enemy.
+        public static readonly List<byte> edtTail = new List<byte>() {0xE8, 0x1D, 0x00, 0x00};
+        
+        internal static int length { get => edtHeader.Count; }
+        
+        [Location(0x00)] public ushort number;
         
         [Location(0x08)] public uint pMoney;
         [Location(0x0C)] public uint nMoney;
@@ -296,25 +314,56 @@ namespace StateOfWarUtility
         [Location(0x104)] public bool hasTimeLimit;
         [Location(0x108)] public uint timeLimit;
         [Location(0x10C)] public TimeLimitType timeLimitType;
+        
+        internal EdtInfo() => Access(0, edtHeader);
+        internal EdtInfo(int begin, List<byte> arr) => Access(begin, arr);        
+        internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
+        internal void AppendTo(List<byte> arr)
+        {
+            arr.AddRange(edtHeader);
+            arr.Set(arr.Count - length, this);
+        }
     }
     
-    public sealed class Edt : ByteFile
+    public sealed class Edt
     {
-        public EdtInfo headerInfo
+        public readonly EdtInfo headerInfo = new EdtInfo();
+        public readonly UnitManager units = new UnitManager();
+        public readonly BuildingManager buildings = new BuildingManager();
+        
+        public Edt(string path) : this(File.ReadAllBytes(path)) { }
+        public Edt(byte[] data) : this(new List<byte>(data)) { }
+        public Edt(List<byte> data) => FromBytes(data);
+        
+        public void FromBytes(List<byte> data)
         {
-            get => (EdtInfo)data.GrabData(0, typeof(EdtInfo));
-            set => data.Set(0, value, typeof(EdtInfo));
+            headerInfo.Access(0, data);
+            int cur = EdtInfo.length;
+            while(cur < data.Count && Building.CheckHeader(cur, data))
+            {
+                buildings.Add().Access(cur, data);
+                cur += Building.length;
+            }
+            while(cur < data.Count && Unit.CheckHeader(cur, data))
+            {
+                units.Add().Access(cur, data);
+                cur += Unit.length;
+            }
         }
         
-        public readonly UnitManager units;
-        public readonly BuildingManager buildings;
-        
-        public Edt(string filePath) : this(File.ReadAllBytes(filePath)) { }
-        public Edt(byte[] raw) : base(raw)
+        public List<byte> ToBytes()
         {
-            buildings = new BuildingManager(data);
-            units = new UnitManager(data, buildings);
+            var data = new List<byte>();
+            headerInfo.AppendTo(data);
+            foreach(var i in buildings)
+                i.AppendTo(data);
+            foreach(var i in units)
+                i.AppendTo(data);
+            data.AddRange(EdtInfo.edtTail);
+            return data;
         }
+        
+        public void Save(string path) => File.WriteAllBytes(path, ToBytes().ToArray());
         
         public static bool Validate(string path)
         {

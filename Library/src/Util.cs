@@ -29,8 +29,9 @@ namespace StateOfWarUtility
             return res;
         }
         
-        public static unsafe IList<byte> Set(this IList<byte> lst, int begin, ValueType data, Type type)
+        public static IList<byte> Set(this IList<byte> lst, int begin, object data)
         {
+            var type = data.GetType();
             // Only assign the specified offsets.
             foreach(var i in type.GetFields())
             {
@@ -55,20 +56,20 @@ namespace StateOfWarUtility
                     sec = BitConverter.GetBytes((bool)i.GetValue(data));
                 }
                 else
-                    throw new InvalidOperationException(i.FieldType + " not supported");
+                    throw new InvalidOperationException(i.FieldType + " not supported.");
                 
                 // Assert sec != null.
                 for(int x = 0; x < sec.Length; x++)
                 {
-                    lst[begin + x] = sec[x];
+                    lst[begin + attr.offset + x] = sec[x];
                 }
             }
             return lst;
         }
         
-        public static unsafe ValueType GrabData(this IReadOnlyList<byte> lst, int begin, Type type)
+        public static object GrabData(this IReadOnlyList<byte> lst, int begin, Type type)
         {
-            ValueType data = (ValueType)Activator.CreateInstance(type);
+            object data = Activator.CreateInstance(type);
             foreach(var i in type.GetFields())
             {
                 var attrs = i.GetCustomAttributes(typeof(Location), false);
@@ -86,6 +87,33 @@ namespace StateOfWarUtility
                     throw new InvalidOperationException(i.FieldType + " not supported");
             }
             return data;
+        }
+        
+        public static void GrabData(this IReadOnlyList<byte> lst, int begin, object data)
+        {
+            var type = data.GetType();
+            foreach(var i in type.GetFields())
+            {
+                var attrs = i.GetCustomAttributes(typeof(Location), false);
+                if(attrs == null || attrs.Length != 1) continue;
+                var attr = attrs[0] as Location;
+                if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
+                    i.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + attr.offset, 4), 0));
+                else if(i.FieldType == typeof(ushort))
+                    i.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + attr.offset, 2), 0));
+                else if(i.FieldType == typeof(byte))
+                    i.SetValue(data, lst[begin + attr.offset]);
+                else if(i.FieldType == typeof(bool))
+                    i.SetValue(data, lst[begin + attr.offset] == 0 ? false : true);
+                else
+                    throw new InvalidOperationException(i.FieldType + " not supported");
+            }
+        }
+        
+        public static IEnumerable<T> Cast<T>(this Array x)
+        {
+            foreach(var item in x)
+                yield return (T)item;
         }
     }
     

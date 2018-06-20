@@ -35,9 +35,9 @@ public static class __Main__
             for(int x=0; x<map.width; x++)
             {
                 int v = 0;
-                if(map[x, y].ground == TileGround.Blocked) v += 1;
-                if(map[x, y].air == TileAir.Blocked) v += 2;
-                if(map[x, y].turret == TileTurret.Blocked) v += 4;
+                if(map[y, x].ground == TileGround.Blocked) v += 1;
+                if(map[y, x].air == TileAir.Blocked) v += 2;
+                if(map[y, x].turret == TileTurret.Blocked) v += 4;
                 Write(v.ToString());
             }
             WriteLine();
@@ -47,11 +47,10 @@ public static class __Main__
         {
             for(int x=0; x<map.width; x++)
             {
-                var t = map[x, y];
+                var t = map[y, x];
                 t.turret = x % 2 == 0 ? TileTurret.Blocked : TileTurret.Passed;
                 t.ground = y % 2 == 0 ? TileGround.Blocked : TileGround.Passed;
                 t.air = y >= map.height / 2 ? TileAir.Blocked : TileAir.Passed;
-                map[x, y] = t;
             }
         }
         
@@ -100,17 +99,15 @@ public static class __Main__
             WriteLine(string.Format("{0} | {1} | {2} {3}", b.type, b.owner, b.x, b.y));
         }
         
-        edt.buildings.Add(3, new Building()
-        {
-            type = BuildingType.BotFactory,
-            level = 0,
-            production0 = UnitType.Achilles,
-            upgrade0 = 0,
-            owner = Owner.Player,
-            x = 50,
-            y = 50,
-            satellite = false,
-        });
+        var building = edt.buildings.Add(3);
+        building.type = BuildingType.BotFactory;
+        building.level = 0;
+        building.production0 = UnitType.Achilles;
+        building.upgrade0 = 0;
+        building.owner = Owner.Player;
+        building.x = 50;
+        building.y = 50;
+        building.satellite = false;
         
         var rm = edt.buildings.Remove(1);
         
@@ -120,13 +117,11 @@ public static class __Main__
             rm.upgrade0, rm.upgrade1, rm.upgrade2, rm.upgrade3, rm.upgrade4,
             rm.owner, rm.satellite, rm.x, rm.y, rm.health));
         
-        edt.units.Add(1, new Unit()
-        {
-            type = UnitType.Codiak,
-            owner = Owner.Player,
-            x = 12,
-            y = 15,
-        });
+        var unit = edt.units.Add(1);
+        unit.type = UnitType.Codiak;
+        unit.owner = Owner.Player;
+        unit.x = 12;
+        unit.y = 15;
         
         var ru = edt.units.Remove(2);
         
