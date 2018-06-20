@@ -46,7 +46,7 @@ namespace StateOfWarUtility
         
         Disk = 40,
         Codiak = 41,
-        Revanger = 42,
+        Revenger = 42,
         Cougar = 43,
         Gattling = 44,
         Achilles = 45,
@@ -59,8 +59,8 @@ namespace StateOfWarUtility
         
         TurretDefence = 25,
         TurretAntiair = 26,
-        TurretIonCannon = 27,
-        TurretLedStorm = 28,
+        TurretIon = 27,
+        TurretLed = 28,
         TurretCluster = 29,
         Headquater = 100,
         LightFactory = 101,
