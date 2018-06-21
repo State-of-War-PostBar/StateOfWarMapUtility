@@ -47,6 +47,26 @@ namespace StateOfWarUtility
             for(int i=0; i<len; i++) res[i] = src[i];
             return res;
         }
+        
+        public static bool ValidateJpg(string path)
+        {
+            try
+            {
+                LocateHeaderEnd(File.ReadAllBytes(path));
+                return true;
+            }
+            catch(FileNotFoundException) { return false; }
+            catch(FieldAccessException) { return false; }
+            catch(AccessViolationException) { return false; }
+        }
+        
+        public static bool ValidateSrf(string path)
+        {
+            try { return LocateHeaderEnd(File.ReadAllBytes(path)) == srfHeader.Length; }
+            catch(FileNotFoundException) { return false; }
+            catch(FieldAccessException) { return false; }
+            catch(AccessViolationException) { return false; }
+        }
     }
     
 }

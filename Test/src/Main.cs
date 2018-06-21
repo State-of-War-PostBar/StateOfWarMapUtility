@@ -11,6 +11,10 @@ public static class __Main__
 {
     static void SrfTest()
     {
+        if(!Srf.ValidateJpg("./Test/res/x.jpg"))
+            throw new FileLoadException("Input is not a jpg file.");
+        if(!Srf.ValidateSrf("./Test/res/x.srf"))
+            throw new FileLoadException("Input is not a srf file.");
         var xjpg = File.ReadAllBytes("./Test/res/x.jpg");
         var xsrf = File.ReadAllBytes("./Test/res/x.srf");
         
