@@ -32,8 +32,8 @@ namespace StateOfWarUtility
         public static readonly List<byte> template = new List<byte>() {
             0x00,0x00,0xFD,0xFF,0xFF,0x00,0xFD,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
         internal static int length { get => template.Count; }
-        [Location(0x0)] public byte x;
-        [Location(0x1)] public byte y;
+        [Location(0x0)] public byte y;
+        [Location(0x1)] public byte x;
         [Location(0x2)] public TileGround ground;
         [Location(0x6)] public TileAir air;
         [Location(0xA)] public TileTurret turret;
@@ -68,7 +68,7 @@ namespace StateOfWarUtility
     public sealed class Map : IEnumerable<Tile>
     {
         public readonly MapInfo headerInfo = new MapInfo();
-        public Tile[,] tiles = null;
+        Tile[,] tiles = null;
         
         public Tile this[int x, int y] { get => tiles[x, y]; }
         
@@ -85,13 +85,13 @@ namespace StateOfWarUtility
         public void FromBytes(List<byte> arr)
         {
             headerInfo.Access(0, arr);
-            tiles = new Tile[height, width];
+            tiles = new Tile[width, height];
             
-            for(int y = 0; y < height; y++) for(int x = 0; x < width; x++)
+            for(int x = 0; x < width; x++) for(int y = 0; y < height; y++)
             {
-                int index = (y * width + x) * Tile.length + MapInfo.length;
-                tiles[y, x] = new Tile();
-                tiles[y, x].Access(index, arr);
+                int index = (x + y * width) * Tile.length + MapInfo.length;
+                tiles[x, y] = new Tile();
+                tiles[x, y].Access(index, arr);
             }
         }
         
@@ -101,7 +101,7 @@ namespace StateOfWarUtility
             headerInfo.AppendTo(data);
             for(int y = 0; y < height; y++) for(int x = 0; x < width; x++)
             {
-                tiles[y, x].AppendTo(data);
+                tiles[x, y].AppendTo(data);
             }
             // Append 5 bytes empty.
             // This is necessary for map reading.
@@ -116,12 +116,14 @@ namespace StateOfWarUtility
             try
             {
                 var data = File.ReadAllBytes(path);
-                var head = data.Slice(0, MapInfo.mapHeader.Count);
-                return MapInfo.mapHeader.SameAs(head);
+                // var head = data.Slice(0, MapInfo.mapHeader.Count);
+                // return MapInfo.mapHeader.SameAs(head);
+                return true;
             }
             catch(FileNotFoundException) { return false; }
             catch(FieldAccessException) { return false; }
             catch(AccessViolationException) { return false; }
+            catch(DirectoryNotFoundException) { return false; }
         }
     }
     

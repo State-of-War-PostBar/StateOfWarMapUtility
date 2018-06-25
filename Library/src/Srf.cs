@@ -66,6 +66,7 @@ namespace StateOfWarUtility
             catch(FileNotFoundException) { return false; }
             catch(FieldAccessException) { return false; }
             catch(AccessViolationException) { return false; }
+            catch(DirectoryNotFoundException) { return false; }
         }
     }
     

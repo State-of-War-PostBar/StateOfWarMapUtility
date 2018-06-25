@@ -1,4 +1,5 @@
 using System;
+using System.Drawing.Imaging;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -34,14 +35,20 @@ public static class __Main__
         WriteLine(string.Format("size ({0}, {1}) init ({0}, {1})",
             map.headerInfo.width, map.headerInfo.height, map.headerInfo.initViewX, map.headerInfo.initViewY));
         
-        for(int y=0; y<map.height; y++)
+        
+        for(byte y=0; y<map.height; y++)
         {
-            for(int x=0; x<map.width; x++)
+            for(byte x=0; x<map.width; x++)
             {
+                if(x != map[x, y].x || y != map[x, y].y)
+                {
+                    throw new InvalidOperationException("Map tile order incorrect!");
+                }
+                
                 int v = 0;
-                if(map[y, x].ground == TileGround.Blocked) v += 1;
-                if(map[y, x].air == TileAir.Blocked) v += 2;
-                if(map[y, x].turret == TileTurret.Blocked) v += 4;
+                if(map[x, y].ground == TileGround.Blocked) v += 1;
+                if(map[x, y].air == TileAir.Blocked) v += 2;
+                if(map[x, y].turret == TileTurret.Blocked) v += 4;
                 Write(v.ToString());
             }
             WriteLine();
@@ -139,7 +146,6 @@ public static class __Main__
         SrfTest();
         MapTest("./Test/res/x.map");
         EdtTest("./Test/res/x.edt");
-        
     }
     
 }

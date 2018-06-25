@@ -46,11 +46,17 @@ namespace StateOfWarUtility
         
         Disk = 40,
         Codiak = 41,
-        Revenger = 42,
+        Avenger = 42,
         Cougar = 43,
         Gattling = 44,
         Achilles = 45,
         Rogon = 46,
+    }
+    
+    public static partial class UtilExt
+    {
+        public static bool IsProductionOnly(this UnitType type) => 16 <= (uint)type && (uint)type <= 34;
+        public static bool IsBattleUnit(this UnitType type) => (uint)type <= 15 || 41 <= (uint)type && type != UnitType.None;
     }
     
     public enum BuildingType : uint
@@ -62,6 +68,7 @@ namespace StateOfWarUtility
         TurretIon = 27,
         TurretLed = 28,
         TurretCluster = 29,
+        
         Headquater = 100,
         LightFactory = 101,
         MediumFactory = 102,
@@ -71,6 +78,11 @@ namespace StateOfWarUtility
         ResearchStation = 106,
         Fan = 107,
         BotFactory = 108,
+    }
+    
+    public static partial class UtilExt
+    {
+        public static bool IsTurret(this BuildingType type) => 25 <= (uint)type && (uint)type <= 29;
     }
     
     public enum Owner : uint
@@ -86,6 +98,12 @@ namespace StateOfWarUtility
         Victory = 0,
         Fail = 1,
         Reinforcement = 2,
+    }
+    
+    public enum DiskRebuildType : uint
+    {
+        Enabled = 0,
+        Disabled = 1,
     }
     
     // ================================================================================================================
@@ -308,8 +326,8 @@ namespace StateOfWarUtility
         [Location(0x7C)] public uint pDiskAttack;
         [Location(0x80)] public uint nDiskAttack;
         
-        [Location(0x88)] public uint pDisk;
-        [Location(0x8C)] public uint nDisk;
+        [Location(0x88)] public DiskRebuildType pDisk;
+        [Location(0x8C)] public DiskRebuildType nDisk;
         
         [Location(0x104)] public bool hasTimeLimit;
         [Location(0x108)] public uint timeLimit;
@@ -370,13 +388,15 @@ namespace StateOfWarUtility
             try
             {
                 var data = File.ReadAllBytes(path);
-                var head = data.Slice(0, EdtInfo.edtHeader.Count);
+                // var head = data.Slice(0, EdtInfo.edtHeader.Count);
                 var tail = data.Slice(data.Length - EdtInfo.edtTail.Count, EdtInfo.edtTail.Count);
-                return EdtInfo.edtHeader.SameAs(head) || EdtInfo.edtTail.SameAs(tail);
+                // return EdtInfo.edtHeader.SameAs(head) || EdtInfo.edtTail.SameAs(tail);
+                return true;
             }
             catch(FileNotFoundException) { return false; }
             catch(FieldAccessException) { return false; }
             catch(AccessViolationException) { return false; }
+            catch(DirectoryNotFoundException) { return false; }
         }
     }
     
