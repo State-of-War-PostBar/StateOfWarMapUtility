@@ -1,4 +1,6 @@
 using System;
+using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -29,84 +31,98 @@ namespace StateOfWarUtility
             return res;
         }
         
+        
+        internal struct PropertyInfo
+        {
+            public FieldInfo field;
+            public int offset;
+            public TypeCode type;
+        }
+        
+        internal class TypeInfo : IEnumerable<PropertyInfo>
+        {
+            public readonly List<PropertyInfo> info = new List<PropertyInfo>();
+            
+            public TypeInfo(Type type)
+            {
+                foreach(var i in type.GetFields())
+                {
+                    var attrs = i.GetCustomAttributes(typeof(Location), false);
+                    if(attrs == null) continue;
+                    Location attr = null;
+                    foreach(var k in attrs)
+                    {
+                        attr = k as Location;
+                        if(attr != null) break;
+                    }
+                    if(attr == null) continue;
+                    
+                    TypeCode code = TypeCode.Object;
+                    if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
+                        code = TypeCode.UInt32;
+                    else if(i.FieldType == typeof(ushort))
+                        code = TypeCode.UInt16;
+                    else if(i.FieldType == typeof(byte))
+                        code = TypeCode.Byte;
+                    else if(i.FieldType == typeof(bool))
+                        code = TypeCode.Boolean;
+                    else
+                        throw new InvalidOperationException(i.FieldType + " not supported.");
+                    
+                    info.Add(new PropertyInfo() { field = i, offset = attr.offset, type = code });
+                }
+            }
+            
+            public IEnumerator<PropertyInfo> GetEnumerator() => info.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
+        }
+        
+        static readonly Dictionary<Type, TypeInfo> typeInfoCache = new Dictionary<Type, TypeInfo>(); 
+        
+        static TypeInfo GetTypeInfo(Type type)
+        {
+            TypeInfo info = null;
+            typeInfoCache.TryGetValue(type, out info);
+            if(info != null) return info;
+            info = new TypeInfo(type);
+            typeInfoCache.Add(type, info);
+            return info;
+        }
+        
         public static IList<byte> Set(this IList<byte> lst, int begin, object data)
         {
-            var type = data.GetType();
             // Only assign the specified offsets.
-            foreach(var i in type.GetFields())
+            foreach(var i in GetTypeInfo(data.GetType()))
             {
-                var attrs = i.GetCustomAttributes(typeof(Location), false);
-                if(attrs == null || attrs.Length != 1) continue;
-                var attr = attrs[0] as Location;
                 byte[] sec = null;
-                if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
+                switch(i.type)
                 {
-                    sec = BitConverter.GetBytes((uint)i.GetValue(data));
+                    case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.field.GetValue(data)); break;
+                    case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.field.GetValue(data)); break;
+                    case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.field.GetValue(data)); break;
+                    case TypeCode.Boolean: sec = BitConverter.GetBytes((bool)i.field.GetValue(data)); break;
+                    default: break;
                 }
-                else if(i.FieldType == typeof(ushort))
-                {
-                    sec = BitConverter.GetBytes((ushort)i.GetValue(data));
-                }
-                else if(i.FieldType == typeof(byte))
-                {
-                    sec = BitConverter.GetBytes((byte)i.GetValue(data));
-                }
-                else if(i.FieldType == typeof(bool))
-                {
-                    sec = BitConverter.GetBytes((bool)i.GetValue(data));
-                }
-                else
-                    throw new InvalidOperationException(i.FieldType + " not supported.");
                 
                 // Assert sec != null.
                 for(int x = 0; x < sec.Length; x++)
-                {
-                    lst[begin + attr.offset + x] = sec[x];
-                }
+                    lst[begin + i.offset + x] = sec[x];
             }
             return lst;
         }
         
-        public static object GrabData(this IReadOnlyList<byte> lst, int begin, Type type)
-        {
-            object data = Activator.CreateInstance(type);
-            foreach(var i in type.GetFields())
-            {
-                var attrs = i.GetCustomAttributes(typeof(Location), false);
-                if(attrs == null || attrs.Length != 1) continue;
-                var attr = attrs[0] as Location;
-                if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
-                    i.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + attr.offset, 4), 0));
-                else if(i.FieldType == typeof(ushort))
-                    i.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + attr.offset, 2), 0));
-                else if(i.FieldType == typeof(byte))
-                    i.SetValue(data, lst[begin + attr.offset]);
-                else if(i.FieldType == typeof(bool))
-                    i.SetValue(data, lst[begin + attr.offset] == 0 ? false : true);
-                else
-                    throw new InvalidOperationException(i.FieldType + " not supported");
-            }
-            return data;
-        }
-        
         public static void GrabData(this IReadOnlyList<byte> lst, int begin, object data)
         {
-            var type = data.GetType();
-            foreach(var i in type.GetFields())
+            foreach(var i in GetTypeInfo(data.GetType()))
             {
-                var attrs = i.GetCustomAttributes(typeof(Location), false);
-                if(attrs == null || attrs.Length != 1) continue;
-                var attr = attrs[0] as Location;
-                if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
-                    i.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + attr.offset, 4), 0));
-                else if(i.FieldType == typeof(ushort))
-                    i.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + attr.offset, 2), 0));
-                else if(i.FieldType == typeof(byte))
-                    i.SetValue(data, lst[begin + attr.offset]);
-                else if(i.FieldType == typeof(bool))
-                    i.SetValue(data, lst[begin + attr.offset] == 0 ? false : true);
-                else
-                    throw new InvalidOperationException(i.FieldType + " not supported");
+                switch(i.type)
+                {
+                    case TypeCode.UInt32: i.field.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
+                    case TypeCode.UInt16: i.field.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
+                    case TypeCode.Byte: i.field.SetValue(data, lst[begin + i.offset]); break;
+                    case TypeCode.Boolean: i.field.SetValue(data, lst[begin + i.offset] == 1); break;
+                    default: throw new InvalidOperationException(i.field.FieldType + " not supported");
+                }
             }
         }
         

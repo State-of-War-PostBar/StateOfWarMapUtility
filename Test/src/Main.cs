@@ -139,6 +139,8 @@ public static class __Main__
         WriteLine(string.Format("{0} | {1} | {2} {3}", ru.type, ru.owner, ru.x, ru.y));
         
         edt.Save("./Test/res/M01.edt");
+        
+        Edt px = new Edt("./Test/res/M01.edt");
     }
     
     public static void Main()
