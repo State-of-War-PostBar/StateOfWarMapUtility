@@ -134,6 +134,8 @@ namespace StateOfWarUtility
             arr.Set(arr.Count - length, this);
         }
         
+        public Unit Clone() => (Unit)MemberwiseClone();
+        
         internal static bool CheckHeader(int begin, List<byte> arr) => template.Slice(0, 4).SameAs(arr.Slice(begin, 4));
     }
     
@@ -216,6 +218,9 @@ namespace StateOfWarUtility
             arr.AddRange(template);
             arr.Set(arr.Count - length, this);
         }
+        
+        
+        public Building Clone() => (Building)MemberwiseClone();
         
         internal static bool CheckHeader(int begin, List<byte> arr) => template.Slice(0, 4).SameAs(arr.Slice(begin, 4));
     }
@@ -393,10 +398,7 @@ namespace StateOfWarUtility
                 // return EdtInfo.edtHeader.SameAs(head) || EdtInfo.edtTail.SameAs(tail);
                 return true;
             }
-            catch(FileNotFoundException) { return false; }
-            catch(FieldAccessException) { return false; }
-            catch(AccessViolationException) { return false; }
-            catch(DirectoryNotFoundException) { return false; }
+            catch(Exception) { return false; }
         }
     }
     

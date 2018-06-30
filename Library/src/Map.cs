@@ -120,11 +120,7 @@ namespace StateOfWarUtility
                 // return MapInfo.mapHeader.SameAs(head);
                 return true;
             }
-            catch(FileNotFoundException) { return false; }
-            catch(FieldAccessException) { return false; }
-            catch(AccessViolationException) { return false; }
-            catch(DirectoryNotFoundException) { return false; }
+            catch(Exception) { return false; }
         }
     }
-    
 }
