@@ -95,13 +95,45 @@ namespace StateOfWarUtility
         public static bool IsDisk(this UnitType x) => x == UnitType.Disk;
         public static bool IsBot(this UnitType x) => 41 <= (uint)x && (uint)x <= 45;
         public static bool IsRogon(this UnitType x) => x == UnitType.Rogon;
-        public static bool IsProductionBuilding(this UnitType x) => 100 <= (uint)x && (uint)x <= 108;
-        public static bool IsBuilding(this UnitType x) => x.IsTurret() || x.IsProductionBuilding();
+        
+        /// <summary>
+        /// Contains: Heavy, Medium, Light factory, and BOt factory. 
+        /// </summary>
+        public static bool IsFactory(this UnitType x) => (101 <= (uint)x && (uint)x <= 103) || x == UnitType.BotFactory;
+        
+        /// <summary>
+        /// Contains: Factories and headquaters.
+        /// </summary>
+        public static bool IsProductionBuilding(this UnitType x) => x.IsFactory() || x == UnitType.Headquater;
+        
+        /// <summary>
+        /// Contains: Mine, research station and fan.
+        /// </summary>
+        public static bool IsResourcesBuilding(this UnitType x) => 105 <= (uint)x && (uint)x <= 107;
+        
+        /// <summary>
+        /// Contains all buildings and turrets.
+        /// </summary>
+        public static bool IsBuilding(this UnitType x) => x.IsTurret() || (100 <= (uint)x && (uint)x <= 108);
+        
+        /// <summary>
+        /// Contains all non-tanks land units.
+        /// </summary>
         public static bool IsHighTech(this UnitType x) => x.IsBot() || x.IsRogon();
+        
+        /// <summary>
+        /// Contains all battile units except for disks.
+        /// </summary>
         public static bool IsLandUint(this UnitType x) => x.IsTank() || x.IsHighTech();
+        
+        /// <summary>
+        /// Contains all things that can is a battle unit in game.
+        /// </summary>
         public static bool IsBattleUnit(this UnitType x) => x.IsLandUint() || x.IsDisk();
+        
+        /// <summary>
+        /// Contains all things that can be produced at Factory and headquater.
+        /// </summary>
         public static bool IsProduction(this UnitType x) => x.IsLandUint() || x.IsAirforce();
     }
-    
-    
 }

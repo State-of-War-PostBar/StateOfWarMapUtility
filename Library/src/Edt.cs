@@ -208,46 +208,46 @@ namespace StateOfWarUtility
         
         internal static int length { get => edtHeader.Count; }
         
-        [Location(0x00)] public ushort number;
+        [Location(0x00)] public ushort number { get; set; }
         
-        [Location(0x08)] public uint pMoney;
-        [Location(0x0C)] public uint nMoney;
+        [Location(0x08)] public uint pMoney { get; set; }
+        [Location(0x0C)] public uint nMoney { get; set; }
         
-        [Location(0x94)] public uint pResearch;
-        [Location(0x98)] public uint nResearch;
+        [Location(0x94)] public uint pResearch { get; set; }
+        [Location(0x98)] public uint nResearch { get; set; }
         
-        [Location(0x14)] public uint pBomber;
-        [Location(0x18)] public uint nBomber;
-        [Location(0x20)] public uint pMeteor;
-        [Location(0x24)] public uint nMeteor;
-        [Location(0x2C)] public uint pCarrier;
-        [Location(0x30)] public uint nCarrier;
-        [Location(0x38)] public uint pTripler;
-        [Location(0x3C)] public uint nTripler;
-        [Location(0x44)] public uint pFighter;
-        [Location(0x48)] public uint nFighter;
+        [Location(0x14)] public uint pBomber { get; set; }
+        [Location(0x18)] public uint nBomber { get; set; }
+        [Location(0x20)] public uint pMeteor { get; set; }
+        [Location(0x24)] public uint nMeteor { get; set; }
+        [Location(0x2C)] public uint pCarrier { get; set; }
+        [Location(0x30)] public uint nCarrier { get; set; }
+        [Location(0x38)] public uint pTripler { get; set; }
+        [Location(0x3C)] public uint nTripler { get; set; }
+        [Location(0x44)] public uint pFighter { get; set; }
+        [Location(0x48)] public uint nFighter { get; set; }
         
-        [Location(0x5C)] public bool pTurretDefence;
-        [Location(0x5D)] public bool pTurretAntiair;
-        [Location(0x5E)] public bool pTurretIon;
-        [Location(0x5F)] public bool pTurretLed;
-        [Location(0x60)] public bool pTurretCluster;
+        [Location(0x5C)] public bool pTurretDefence { get; set; }
+        [Location(0x5D)] public bool pTurretAntiair { get; set; }
+        [Location(0x5E)] public bool pTurretIon { get; set; }
+        [Location(0x5F)] public bool pTurretLed { get; set; }
+        [Location(0x60)] public bool pTurretCluster { get; set; }
         
-        [Location(0x66)] public bool nTurretDefence;
-        [Location(0x67)] public bool nTurretAntiair;
-        [Location(0x68)] public bool nTurretIon;
-        [Location(0x69)] public bool nTurretLed;
-        [Location(0x6A)] public bool nTurretCluster;
+        [Location(0x66)] public bool nTurretDefence { get; set; }
+        [Location(0x67)] public bool nTurretAntiair { get; set; }
+        [Location(0x68)] public bool nTurretIon { get; set; }
+        [Location(0x69)] public bool nTurretLed { get; set; }
+        [Location(0x6A)] public bool nTurretCluster { get; set; }
         
-        [Location(0x7C)] public uint pDiskAttack;
-        [Location(0x80)] public uint nDiskAttack;
+        [Location(0x7C)] public uint pDiskAttack { get; set; }
+        [Location(0x80)] public uint nDiskAttack { get; set; }
         
-        [Location(0x88)] public DiskRebuildType pDisk;
-        [Location(0x8C)] public DiskRebuildType nDisk;
+        [Location(0x88)] public DiskRebuildType pDisk { get; set; }
+        [Location(0x8C)] public DiskRebuildType nDisk { get; set; }
         
-        [Location(0x104)] public bool hasTimeLimit;
-        [Location(0x108)] public uint timeLimit;
-        [Location(0x10C)] public TimeLimitType timeLimitType;
+        [Location(0x104)] public bool hasTimeLimit { get; set; }
+        [Location(0x108)] public uint timeLimit { get; set; }
+        [Location(0x10C)] public TimeLimitType timeLimitType { get; set; }
         
         internal EdtInfo() => Access(0, edtHeader);
         internal EdtInfo(int begin, List<byte> arr) => Access(begin, arr);        

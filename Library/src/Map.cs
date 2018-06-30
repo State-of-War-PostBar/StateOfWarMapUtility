@@ -32,11 +32,13 @@ namespace StateOfWarUtility
         public static readonly List<byte> template = new List<byte>() {
             0x00,0x00,0xFD,0xFF,0xFF,0x00,0xFD,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
         internal static int length { get => template.Count; }
-        [Location(0x0)] public byte y;
-        [Location(0x1)] public byte x;
-        [Location(0x2)] public TileGround ground;
-        [Location(0x6)] public TileAir air;
-        [Location(0xA)] public TileTurret turret;
+        
+        [Location(0x0)] public byte y { get; set; }
+        [Location(0x1)] public byte x { get; set; }
+        [Location(0x2)] public TileGround ground { get; set; }
+        [Location(0x6)] public TileAir air { get; set; }
+        [Location(0xA)] public TileTurret turret { get; set; }
+        
         internal Tile() => Access(0, template);
         internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
         internal void AppendTo(List<byte> arr)
@@ -52,10 +54,12 @@ namespace StateOfWarUtility
         internal static readonly List<byte> mapHeader = new List<byte>() {
             0x04,0x56,0x45,0x52,0x37,0x00,0x03,0x00,0x00,0xC0,0x04,0x00,0x00,0x40,0x00,0x00,0x00,0x40,0x00,0x00,0x00 };
         public static int length { get => mapHeader.Count; }
-        [Location(0x05)] public uint initViewX;
-        [Location(0x09)] public uint initViewY;
-        [Location(0x0D)] public uint width;
-        [Location(0x11)] public uint height;
+        
+        [Location(0x05)] public uint initViewX { get; set; }
+        [Location(0x09)] public uint initViewY { get; set; }
+        [Location(0x0D)] public uint width { get; set; }
+        [Location(0x11)] public uint height { get; set; }
+        
         internal MapInfo() => Access(0, mapHeader);
         internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
         internal void AppendTo(List<byte> arr)
