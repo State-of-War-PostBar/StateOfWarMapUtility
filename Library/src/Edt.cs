@@ -8,102 +8,12 @@ using System.Runtime.InteropServices;
 
 namespace StateOfWarUtility
 {
-    public enum UnitType : uint
+    public interface Unit
     {
-        None = 0,
-        
-        LAntiair = 1,
-        MAntiair = 2,
-        HAntiair = 3,
-        LArti = 4,
-        MArti = 5,
-        HArti = 6,
-        LArmor = 7,
-        MArmor = 8,
-        HArmor = 9,
-        LFlame = 10,
-        MFlame = 11,
-        HFlame = 12,
-        LSpec = 13,
-        MSpec = 14,
-        HSpec = 15,
-        
-        Gold1 = 16,
-        Gold2 = 17,
-        Gold3 = 18,
-        Research1 = 19,
-        Research2 = 20,
-        Research3 = 21,
-        Power1 = 22,
-        Power2 = 23,
-        Power3 = 24,
-        
-        Bomber = 30,
-        Carrier = 31,
-        Fighter = 32,
-        Tripler = 33,
-        Meteor = 34,
-        
-        Disk = 40,
-        Codiak = 41,
-        Avenger = 42,
-        Cougar = 43,
-        Gattling = 44,
-        Achilles = 45,
-        Rogon = 46,
-    }
-    
-    public static partial class UtilExt
-    {
-        public static bool IsProductionOnly(this UnitType type) => 16 <= (uint)type && (uint)type <= 34;
-        public static bool IsBattleUnit(this UnitType type) => (uint)type <= 15 || 41 <= (uint)type && type != UnitType.None;
-    }
-    
-    public enum BuildingType : uint
-    {
-        None = 0,
-        
-        TurretDefence = 25,
-        TurretAntiair = 26,
-        TurretIon = 27,
-        TurretLed = 28,
-        TurretCluster = 29,
-        
-        Headquater = 100,
-        LightFactory = 101,
-        MediumFactory = 102,
-        HeavyFactory = 103,
-        Radar = 104,
-        Mine = 105,
-        ResearchStation = 106,
-        Fan = 107,
-        BotFactory = 108,
-    }
-    
-    public static partial class UtilExt
-    {
-        public static bool IsTurret(this BuildingType type) => 25 <= (uint)type && (uint)type <= 29;
-    }
-    
-    public enum Owner : uint
-    {
-        Player = 0,
-        Enemy = 1,
-        Neutral = 2,
-    }
-    
-    // only work when there is a time limit, specified by other position.
-    public enum TimeLimitType : uint
-    {
-        Victory = 0,
-        Fail = 1,
-        Reinforcement = 2,
-    }
-    
-    public enum DiskRebuildType : uint
-    {
-        Enabled = 0,
-        Disabled = 1,
+        UnitType type { get; set; }
+        Owner owner { get; set; }
+        uint x { get; set; }
+        uint y { get; set; }
     }
     
     // ================================================================================================================
@@ -111,7 +21,7 @@ namespace StateOfWarUtility
     // ================================================================================================================
     
     
-    public class Unit
+    public class BattleUnit : Unit
     {
         internal static readonly List<byte> template = new List<byte>() {
             0xE0,0x00,0x00,0x00,
@@ -119,14 +29,16 @@ namespace StateOfWarUtility
             0x01,0x00,0x00,0x00,
             0x50,0x02,0x00,0x00,
             0xF0,0x01,0x00,0x00 };
-        internal static int length { get => template.Count; }
-        [Location(0x4)] public UnitType type;
-        [Location(0x8)] public Owner owner;
-        [Location(0xC)] public uint x;
-        [Location(0x10)] public uint y;
         
-        internal Unit() => Access(0, template);
-        internal Unit(int begin, List<byte> arr) => Access(begin, arr);        
+        internal static int length { get => template.Count; }
+        
+        [Location(0x4)] public UnitType type { get; set; }
+        [Location(0x8)] public Owner owner { get; set; }
+        [Location(0xC)] public uint x { get; set; }
+        [Location(0x10)] public uint y { get; set; }
+        
+        internal BattleUnit() => Access(0, template);
+        internal BattleUnit(int begin, List<byte> arr) => Access(begin, arr);        
         internal void Access(int begin, List<byte> arr) => arr.GrabData(begin, this);
         internal void AppendTo(List<byte> arr)
         {
@@ -134,42 +46,41 @@ namespace StateOfWarUtility
             arr.Set(arr.Count - length, this);
         }
         
-        public Unit Clone() => (Unit)MemberwiseClone();
+        public BattleUnit Clone() => (BattleUnit)MemberwiseClone();
         
         internal static bool CheckHeader(int begin, List<byte> arr) => template.Slice(0, 4).SameAs(arr.Slice(begin, 4));
     }
     
-    public class UnitManager : IEnumerable<Unit>
+    public class UnitManager : IEnumerable<BattleUnit>
     {
-        readonly List<Unit> data = new List<Unit>();
+        readonly List<BattleUnit> data = new List<BattleUnit>();
         
         internal UnitManager() { }
-        
         public int count { get => data.Count;}
         
-        public Unit this[int index] { get => data[index]; }
+        public BattleUnit this[int index] { get => data[index]; }
         
-        public Unit Add() => Add(count);
-        public Unit Add(int before)
+        public BattleUnit Add() => Add(count);
+        public BattleUnit Add(int before)
         {
             if(before < 0 || before > count)
                 throw new InvalidOperationException(
                     string.Format("cannot insert the element before {0}, array length is {1}.", before, count));
-            Unit unit = new Unit();
+            BattleUnit unit = new BattleUnit();
             data.Insert(before, unit);
             return unit;
         }
         
-        public Unit Remove(int index)
+        public BattleUnit Remove(int index)
         {
             if(index < 0 || index >= count)
                 throw new InvalidOperationException("cannot remove the element that does not exist.");
-            Unit rm = data[index];
+            BattleUnit rm = data[index];
             data.RemoveAt(index);
             return rm;
         }
         
-        public IEnumerator<Unit> GetEnumerator() => data.GetEnumerator();
+        public IEnumerator<BattleUnit> GetEnumerator() => data.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
     }
     
@@ -192,23 +103,24 @@ namespace StateOfWarUtility
             0x3A,0x00,0x00,0x00,0x35,0x00,0x00,0x00,
             0x63,0x00,0x00,0x00 };
         internal static int length { get => template.Count; }
-        [Location(0x04)] public BuildingType type;
-        [Location(0x08)] public uint level;
-        [Location(0x0C)] public UnitType production0;
-        [Location(0x10)] public UnitType production1;
-        [Location(0x14)] public UnitType production2;
-        [Location(0x18)] public UnitType production3;
-        [Location(0x1C)] public UnitType production4;
-        [Location(0x20)] public uint upgrade0;
-        [Location(0x24)] public uint upgrade1;
-        [Location(0x28)] public uint upgrade2;
-        [Location(0x2C)] public uint upgrade3;
-        [Location(0x30)] public uint upgrade4;
-        [Location(0x38)] public Owner owner;
-        [Location(0x3C)] public bool satellite;
-        [Location(0x40)] public uint x;
-        [Location(0x44)] public uint y;
-        [Location(0x48)] public uint health;
+        
+        [Location(0x04)] public UnitType type { get; set; }
+        [Location(0x08)] public uint level { get; set; }
+        [Location(0x0C)] public UnitType production0 { get; set; }
+        [Location(0x10)] public UnitType production1 { get; set; }
+        [Location(0x14)] public UnitType production2 { get; set; }
+        [Location(0x18)] public UnitType production3 { get; set; }
+        [Location(0x1C)] public UnitType production4 { get; set; }
+        [Location(0x20)] public uint upgrade0 { get; set; }
+        [Location(0x24)] public uint upgrade1 { get; set; }
+        [Location(0x28)] public uint upgrade2 { get; set; }
+        [Location(0x2C)] public uint upgrade3 { get; set; }
+        [Location(0x30)] public uint upgrade4 { get; set; }
+        [Location(0x38)] public Owner owner { get; set; }
+        [Location(0x3C)] public bool satellite { get; set; }
+        [Location(0x40)] public uint x { get; set; }
+        [Location(0x44)] public uint y { get; set; }
+        [Location(0x48)] public uint health { get; set; }
         
         internal Building() => Access(0, template);
         internal Building(int begin, List<byte> arr) => Access(begin, arr);        
@@ -218,7 +130,6 @@ namespace StateOfWarUtility
             arr.AddRange(template);
             arr.Set(arr.Count - length, this);
         }
-        
         
         public Building Clone() => (Building)MemberwiseClone();
         
@@ -367,10 +278,10 @@ namespace StateOfWarUtility
                 buildings.Add().Access(cur, data);
                 cur += Building.length;
             }
-            while(cur < data.Count && Unit.CheckHeader(cur, data))
+            while(cur < data.Count && BattleUnit.CheckHeader(cur, data))
             {
                 units.Add().Access(cur, data);
-                cur += Unit.length;
+                cur += BattleUnit.length;
             }
         }
         

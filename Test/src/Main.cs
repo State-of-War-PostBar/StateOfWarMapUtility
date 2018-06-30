@@ -111,7 +111,7 @@ public static class __Main__
         }
         
         var building = edt.buildings.Add(3);
-        building.type = BuildingType.BotFactory;
+        building.type = UnitType.BotFactory;
         building.level = 0;
         building.production0 = UnitType.Achilles;
         building.upgrade0 = 0;

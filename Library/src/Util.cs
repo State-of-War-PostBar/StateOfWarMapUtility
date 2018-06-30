@@ -32,20 +32,20 @@ namespace StateOfWarUtility
         }
         
         
-        internal struct PropertyInfo
+        internal struct Info
         {
-            public FieldInfo field;
+            public PropertyInfo property;
             public int offset;
             public TypeCode type;
         }
         
-        internal class TypeInfo : IEnumerable<PropertyInfo>
+        internal class TypeInfo : IEnumerable<Info>
         {
-            public readonly List<PropertyInfo> info = new List<PropertyInfo>();
+            public readonly List<Info> info = new List<Info>();
             
             public TypeInfo(Type type)
             {
-                foreach(var i in type.GetFields())
+                foreach(var i in type.GetProperties())
                 {
                     var attrs = i.GetCustomAttributes(typeof(Location), false);
                     if(attrs == null) continue;
@@ -58,22 +58,22 @@ namespace StateOfWarUtility
                     if(attr == null) continue;
                     
                     TypeCode code = TypeCode.Object;
-                    if(i.FieldType == typeof(uint) || i.FieldType.IsEnum) // assume all enum is uint32.
+                    if(i.PropertyType == typeof(uint) || i.PropertyType.IsEnum) // assume all enum is uint32.
                         code = TypeCode.UInt32;
-                    else if(i.FieldType == typeof(ushort))
+                    else if(i.PropertyType == typeof(ushort))
                         code = TypeCode.UInt16;
-                    else if(i.FieldType == typeof(byte))
+                    else if(i.PropertyType == typeof(byte))
                         code = TypeCode.Byte;
-                    else if(i.FieldType == typeof(bool))
+                    else if(i.PropertyType == typeof(bool))
                         code = TypeCode.Boolean;
                     else
-                        throw new InvalidOperationException(i.FieldType + " not supported.");
+                        throw new InvalidOperationException(i.PropertyType + " not supported.");
                     
-                    info.Add(new PropertyInfo() { field = i, offset = attr.offset, type = code });
+                    info.Add(new Info() { property = i, offset = attr.offset, type = code });
                 }
             }
             
-            public IEnumerator<PropertyInfo> GetEnumerator() => info.GetEnumerator();
+            public IEnumerator<Info> GetEnumerator() => info.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
         }
         
@@ -97,10 +97,10 @@ namespace StateOfWarUtility
                 byte[] sec = null;
                 switch(i.type)
                 {
-                    case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.field.GetValue(data)); break;
-                    case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.field.GetValue(data)); break;
-                    case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.field.GetValue(data)); break;
-                    case TypeCode.Boolean: sec = BitConverter.GetBytes((bool)i.field.GetValue(data)); break;
+                    case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.property.GetValue(data)); break;
+                    case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.property.GetValue(data)); break;
+                    case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.property.GetValue(data)); break;
+                    case TypeCode.Boolean: sec = BitConverter.GetBytes((bool)i.property.GetValue(data)); break;
                     default: break;
                 }
                 
@@ -117,11 +117,11 @@ namespace StateOfWarUtility
             {
                 switch(i.type)
                 {
-                    case TypeCode.UInt32: i.field.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
-                    case TypeCode.UInt16: i.field.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
-                    case TypeCode.Byte: i.field.SetValue(data, lst[begin + i.offset]); break;
-                    case TypeCode.Boolean: i.field.SetValue(data, lst[begin + i.offset] == 1); break;
-                    default: throw new InvalidOperationException(i.field.FieldType + " not supported");
+                    case TypeCode.UInt32: i.property.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
+                    case TypeCode.UInt16: i.property.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
+                    case TypeCode.Byte: i.property.SetValue(data, lst[begin + i.offset]); break;
+                    case TypeCode.Boolean: i.property.SetValue(data, lst[begin + i.offset] == 1); break;
+                    default: throw new InvalidOperationException(i.property.PropertyType + " not supported");
                 }
             }
         }
