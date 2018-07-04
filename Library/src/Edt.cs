@@ -89,7 +89,7 @@ namespace StateOfWarUtility
     // ================================================================================================================
     
     
-    public class Building
+    public class Building : Unit
     {
         internal static readonly List<byte> template = new List<byte>() {
             0x7B,0x00,0x00,0x00,0x64,0x00,0x00,0x00,
