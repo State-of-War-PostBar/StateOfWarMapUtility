@@ -12,8 +12,8 @@ namespace StateOfWarUtility
     {
         UnitType type { get; set; }
         Owner owner { get; set; }
-        uint x { get; set; }
-        uint y { get; set; }
+        int x { get; set; }
+        int y { get; set; }
     }
     
     // ================================================================================================================
@@ -34,8 +34,8 @@ namespace StateOfWarUtility
         
         [Location(0x4)] public UnitType type { get; set; }
         [Location(0x8)] public Owner owner { get; set; }
-        [Location(0xC)] public uint x { get; set; }
-        [Location(0x10)] public uint y { get; set; }
+        [Location(0xC)] public int x { get; set; }
+        [Location(0x10)] public int y { get; set; }
         
         internal BattleUnit() => Access(0, template);
         internal BattleUnit(int begin, List<byte> arr) => Access(begin, arr);        
@@ -118,8 +118,8 @@ namespace StateOfWarUtility
         [Location(0x30)] public uint upgrade4 { get; set; }
         [Location(0x38)] public Owner owner { get; set; }
         [Location(0x3C)] public bool satellite { get; set; }
-        [Location(0x40)] public uint x { get; set; }
-        [Location(0x44)] public uint y { get; set; }
+        [Location(0x40)] public int x { get; set; }
+        [Location(0x44)] public int y { get; set; }
         [Location(0x48)] public uint health { get; set; }
         
         internal Building() => Access(0, template);

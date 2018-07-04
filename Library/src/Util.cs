@@ -60,6 +60,8 @@ namespace StateOfWarUtility
                     TypeCode code = TypeCode.Object;
                     if(i.PropertyType == typeof(uint) || i.PropertyType.IsEnum) // assume all enum is uint32.
                         code = TypeCode.UInt32;
+                    else if(i.PropertyType == typeof(int))
+                        code = TypeCode.Int32;
                     else if(i.PropertyType == typeof(ushort))
                         code = TypeCode.UInt16;
                     else if(i.PropertyType == typeof(byte))
@@ -97,6 +99,7 @@ namespace StateOfWarUtility
                 byte[] sec = null;
                 switch(i.type)
                 {
+                    case TypeCode.Int32 : sec = BitConverter.GetBytes((int)i.property.GetValue(data)); break;
                     case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.property.GetValue(data)); break;
                     case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.property.GetValue(data)); break;
                     case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.property.GetValue(data)); break;
@@ -117,6 +120,7 @@ namespace StateOfWarUtility
             {
                 switch(i.type)
                 {
+                    case TypeCode.Int32 : i.property.SetValue(data, BitConverter.ToInt32(lst.Slice(begin + i.offset, 4), 0)); break;
                     case TypeCode.UInt32: i.property.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
                     case TypeCode.UInt16: i.property.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
                     case TypeCode.Byte: i.property.SetValue(data, lst[begin + i.offset]); break;
