@@ -6,6 +6,7 @@ using System.Text;
 using StateOfWarUtility;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using static System.Console;
 
 public static class __Main__
@@ -30,7 +31,9 @@ public static class __Main__
     {
         if(!Map.Validate(path))
             throw new FileLoadException(path + " is not a map file.");
-        Map map = new Map(path);
+        
+        Map map = null;
+        EnableProfiling(() => map = new Map(path));
         
         WriteLine(string.Format("size ({0}, {1}) init ({0}, {1})",
             map.headerInfo.width, map.headerInfo.height, map.headerInfo.initViewX, map.headerInfo.initViewY));
@@ -73,7 +76,8 @@ public static class __Main__
         if(!Edt.Validate(path))
             throw new FileLoadException(path + " is not a edt file.");
         
-        Edt edt = new Edt(path);
+        Edt edt = null;
+        EnableProfiling(() => edt = new Edt(path));
         
         var header = edt.headerInfo;
         WriteLine("Time limit : " + header.hasTimeLimit);
@@ -141,6 +145,16 @@ public static class __Main__
         edt.Save("./Test/res/M01.edt");
         
         Edt px = new Edt("./Test/res/M01.edt");
+    }
+    
+    static void EnableProfiling(Action t)
+    {
+        Stopwatch st = new Stopwatch();
+        st.Start();
+        t();
+        st.Stop();
+        // WriteLine(string.Format("Profile: {0}ms.", st.Elapsed.TotalMilliseconds));
+        File.AppendAllText("./profiles.txt", string.Format("Profile: {0}ms.\n", st.Elapsed.TotalMilliseconds));
     }
     
     public static void Main()

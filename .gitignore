@@ -5,6 +5,7 @@ obj/
 *.map
 *.srf
 *.edt
+*.txt
 
 !x.edt
 !x.srf

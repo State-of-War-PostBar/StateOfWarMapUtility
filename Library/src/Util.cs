@@ -4,6 +4,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+
+using System.Linq.Expressions;
+
 namespace StateOfWarUtility
 {
     public class Location : Attribute
@@ -34,7 +37,8 @@ namespace StateOfWarUtility
         
         internal struct Info
         {
-            public PropertyInfo property;
+            public Func<object, object> Get;
+            public Action<object, object> Set;
             public int offset;
             public TypeCode type;
         }
@@ -58,6 +62,7 @@ namespace StateOfWarUtility
                     if(attr == null) continue;
                     
                     TypeCode code = TypeCode.Object;
+                    
                     if(i.PropertyType == typeof(uint) || i.PropertyType.IsEnum) // assume all enum is uint32.
                         code = TypeCode.UInt32;
                     else if(i.PropertyType == typeof(int))
@@ -71,12 +76,49 @@ namespace StateOfWarUtility
                     else
                         throw new InvalidOperationException(i.PropertyType + " not supported.");
                     
-                    info.Add(new Info() { property = i, offset = attr.offset, type = code });
+                    info.Add(new Info() {
+                        offset = attr.offset,
+                        type = code,
+                        Get = BuildGetter(i),
+                        Set = BuildSetter(i) });
                 }
             }
             
             public IEnumerator<Info> GetEnumerator() => info.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => throw new NotSupportedException();
+        }
+        
+        static Func<object, object> BuildGetter(PropertyInfo prop)
+        {
+            // Target expression: (object target) => ((ContainerType)obj).property;
+            var objParam = Expression.Parameter(typeof(object), "target");
+            Expression body =
+                Expression.Convert(
+                    Expression.MakeMemberAccess(
+                        Expression.Convert(
+                            objParam,
+                            prop.DeclaringType),
+                        prop),
+                    typeof(object));
+            return Expression.Lambda<Func<object, object>>(body, objParam).Compile();
+        }
+        
+        static Action<object, object> BuildSetter(PropertyInfo prop)
+        {
+            // Target expression: (object target, object value) => ((ContainerType)target).property = (ValueType)value;
+            var objParam = Expression.Parameter(typeof(object), "target");
+            var valParam = Expression.Parameter(typeof(object), "value");
+            Expression body =
+                Expression.Assign(
+                    Expression.MakeMemberAccess(
+                        Expression.Convert(
+                            objParam,
+                            prop.DeclaringType),
+                        prop),
+                    Expression.Convert(
+                        valParam,
+                        prop.PropertyType));
+            return Expression.Lambda<Action<object, object>>(body, objParam, valParam).Compile();
         }
         
         static readonly Dictionary<Type, TypeInfo> typeInfoCache = new Dictionary<Type, TypeInfo>(); 
@@ -99,12 +141,11 @@ namespace StateOfWarUtility
                 byte[] sec = null;
                 switch(i.type)
                 {
-                    case TypeCode.Int32 : sec = BitConverter.GetBytes((int)i.property.GetValue(data)); break;
-                    case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.property.GetValue(data)); break;
-                    case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.property.GetValue(data)); break;
-                    case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.property.GetValue(data)); break;
-                    case TypeCode.Boolean: sec = BitConverter.GetBytes((bool)i.property.GetValue(data)); break;
-                    default: break;
+                    case TypeCode.Int32 : sec = BitConverter.GetBytes((int)i.Get(data)); break;
+                    case TypeCode.UInt32: sec = BitConverter.GetBytes((uint)i.Get(data)); break;
+                    case TypeCode.UInt16: sec = BitConverter.GetBytes((ushort)i.Get(data)); break;
+                    case TypeCode.Byte: sec = BitConverter.GetBytes((byte)i.Get(data)); break;
+                    case TypeCode.Boolean: sec = BitConverter.GetBytes((bool)i.Get(data)); break;
                 }
                 
                 // Assert sec != null.
@@ -120,12 +161,11 @@ namespace StateOfWarUtility
             {
                 switch(i.type)
                 {
-                    case TypeCode.Int32 : i.property.SetValue(data, BitConverter.ToInt32(lst.Slice(begin + i.offset, 4), 0)); break;
-                    case TypeCode.UInt32: i.property.SetValue(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
-                    case TypeCode.UInt16: i.property.SetValue(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
-                    case TypeCode.Byte: i.property.SetValue(data, lst[begin + i.offset]); break;
-                    case TypeCode.Boolean: i.property.SetValue(data, lst[begin + i.offset] == 1); break;
-                    default: throw new InvalidOperationException(i.property.PropertyType + " not supported");
+                    case TypeCode.Int32 : i.Set(data, BitConverter.ToInt32(lst.Slice(begin + i.offset, 4), 0)); break;
+                    case TypeCode.UInt32: i.Set(data, BitConverter.ToUInt32(lst.Slice(begin + i.offset, 4), 0)); break;
+                    case TypeCode.UInt16: i.Set(data, BitConverter.ToUInt16(lst.Slice(begin + i.offset, 2), 0)); break;
+                    case TypeCode.Byte: i.Set(data, lst[begin + i.offset]); break;
+                    case TypeCode.Boolean: i.Set(data, lst[begin + i.offset] == 1); break;
                 }
             }
         }
@@ -152,7 +192,4 @@ namespace StateOfWarUtility
         public Ref(T val) { this.value = val; }
         public static implicit operator T(Ref<T> x) => x.value;
     }
-    
-    
-    
 }
